@@ -141,6 +141,41 @@ const config: IConfig = {
     ],
   ],
   chainWebpack(config, { webpack }) {
+    config.merge({
+      optimization: {
+        splitChunks: {
+          chunks: 'all',
+          minSize: 30000,
+          maxSize: 0,
+          minChunks: 2,
+          maxAsyncRequests: 5,
+          maxInitialRequests: 3,
+          automaticNameDelimiter: '_',
+          automaticNameMaxLength: 30,
+          name: true,
+          cacheGroups: {
+            react: {
+              test: /[\\/]node_modules[\\/](react|react-dom|react-redux|react-router|redux|antd)[\\/]/,
+              name: "react.vendor",
+            },
+            utils: {
+              test: /[\\/]node_modules[\\/](lodash|moment|moment-timezone)[\\/]/,
+              name: "utils.vendor",
+            },
+            vendor: {
+              test: /[\\/]node_modules[\\/](!lodash)(!moment)(!moment-timezone)[\\/]/,
+              name: "vendor",
+              priority: 0,
+            },
+            default: {
+              minChunks: 2,
+              priority: -10,
+              reuseExistingChunk: true,
+            },
+          },
+        },
+      },
+    });
     config.plugin('monaco-editor').use(MonacoWebpackPlugin);
   },
   alias: {

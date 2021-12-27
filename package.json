@@ -18,7 +18,8 @@
     "lint:git": "sh ./bin/gitlint.sh || exit 1",
     "lint:drip-table": "lerna run lint --stream --scope=drip-table",
     "lint:drip-table-driver-antd": "lerna run lint --stream --scope=drip-table-driver-antd",
-    "lint:drip-table-generator": "lerna run lint --stream --scope=drip-table-generator"
+    "lint:drip-table-generator": "lerna run lint --stream --scope=drip-table-generator",
+    "postinstall": "grep -rl '~demos' node_modules/@umijs/preset-dumi | xargs -r sed -i 's/~demos/demos/g' && grep -rl ':uuid' node_modules/@umijs/preset-dumi | xargs -r sed -i 's/:uuid/uuid/g'"
   },
   "devDependencies": {
     "@ant-design/icons": "^4.7.0",
