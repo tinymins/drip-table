@@ -516,6 +516,7 @@ export const validateDripTableColumnSchema = (data: unknown, schema?: SchemaObje
         ],
       },
       style: DRIP_TABLE_CSS_SCHEMA,
+      hoverStyle: DRIP_TABLE_CSS_SCHEMA,
       width: { typeof: ['string', 'number'] },
       align: { enum: ['left', 'center', 'right'] },
       verticalAlign: { enum: ['top', 'middle', 'bottom', 'stretch'] },

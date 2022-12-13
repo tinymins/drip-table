@@ -75,7 +75,10 @@ export const columnGenerator = <
 >(
     tableInfo: DripTableTableInformation<RecordType, ExtraOptions>,
     columnSchema: DripTableBuiltInColumnSchema | NonNullable<ExtraOptions['CustomColumnSchema']>,
-    extraProps: Pick<DripTableProps<RecordType, ExtraOptions>, 'driver' | 'components' | 'ext' | 'onEvent' | 'onDataSourceChange'>,
+    extraProps: Pick<DripTableProps<RecordType, ExtraOptions>, 'driver' | 'components' | 'ext' | 'onEvent' | 'onDataSourceChange'> & {
+      hoverRowKey: React.Key | undefined;
+      setHoverRowKey: (k: React.Key | undefined) => void;
+    },
   ): TableColumnType<RcTableRecordType<RecordType>> & { style?: React.CSSProperties } => {
   let width = String(columnSchema.width).trim();
   if ((/^[0-9]+$/uig).test(width)) {
@@ -227,19 +230,37 @@ export const columnGenerator = <
     }
     {
       const render = column.render;
-      column.render = (...args) => (
+      column.render = (d, row, ...args) => (
         <React.Fragment>
-          { render(...args) }
+          { render(d, row, ...args) }
           {
-            columnSchema.style
+            columnSchema.style || columnSchema.hoverStyle
               ? (
                 <div
                   style={{ display: 'none' }}
                   ref={(el) => {
-                    const parent = el?.parentElement;
+                    const tdEl = el?.parentElement;
                     const style = columnSchema.style;
-                    if (parent && style) {
-                      setElementCSS(parent, style);
+                    const hoverStyle = columnSchema.hoverStyle;
+                    if (tdEl) {
+                      const trEl = tdEl.parentElement;
+                      if (trEl instanceof HTMLTableCellElement) {
+                        trEl.addEventListener('mouseenter', () => { extraProps.setHoverRowKey(row.key); });
+                        trEl.addEventListener('mouseleave', () => { extraProps.setHoverRowKey(void 0); });
+                      }
+                      const updateStyle = () => {
+                        if (style) {
+                          setElementCSS(tdEl, style);
+                        }
+                        if (hoverStyle && extraProps.hoverRowKey === row.key) {
+                          setElementCSS(tdEl, hoverStyle);
+                        }
+                      };
+                      updateStyle();
+                      /*
+                       * 啊 parent.addEventListener('mouseenter', updateStyle);
+                       * 啊 parent.addEventListener('mouseleave', updateStyle);
+                       */
                     }
                   }}
                 />
@@ -413,6 +434,7 @@ ExtraOptions extends Partial<DripTableExtraOptions> = never,
         driver: tableProps.driver,
         components: tableProps.components,
         ext: tableProps.ext,
+        hoverRowKey,
         onEvent: tableProps.onEvent,
         onDataSourceChange: tableProps.onDataSourceChange,
       };
@@ -639,6 +661,7 @@ ExtraOptions extends Partial<DripTableExtraOptions> = never,
     },
     [
       dragInIndex,
+      hoverRowKey,
       tableInfo,
       tableProps.schema.columns,
       tableProps.driver,
