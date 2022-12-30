@@ -59,11 +59,13 @@ const dataSource = [
 ];
 
 const Demo = () => {
+  const [ds, setDs] = React.useState(dataSource);
+  setInterval(() => { setDs([...dataSource]) }, 5000);
   return (
     <DripTable
       driver={DripTableDriverAntDesign}
       schema={schema}
-      dataSource={dataSource}
+      dataSource={ds}
       componentDidMount={() => { message.info('Lifecycle: componentWillUnmount'); }}
     />
   );
