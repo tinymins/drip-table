@@ -199,57 +199,66 @@ const DripTableWrapper = React.forwardRef(<
   }), [props.schema, props.dataSource, props.__PARENT_INFO__]);
 
   const createEvaluator: SandboxCreateEvaluator = props.createEvaluator ?? defaultCreateExecutor;
-  const execute: SandboxEvaluate = (script, ctx = {}) => createEvaluator(script, Object.keys(ctx))?.(...Object.values(ctx));
-  const safeExecute: SandboxSafeEvaluate = (script, ctx = {}, defaultValue = void 0) => {
-    try {
-      return execute(script, ctx);
-    } catch (error) {
-      console.warn(error);
-    }
-    return defaultValue;
-  };
-  const finalizeString: FinalizeString = (mode, text, record, recordIndex, ext) => {
-    let value = '';
-    if (!mode || mode === 'plain') {
-      value = stringify(text);
-    } else if (mode === 'key') {
-      value = stringify(get(record, text, ''));
-    } else if (mode === 'pattern') {
-      value = stringify(text)
-        .replace(/\{\{(.+?)\}\}/guis, (s, s1) => {
-          try {
-            return execute(`return ${s1}`, {
-              props: {
-                record,
-                recordIndex,
-                ext,
-              },
-              rec: record,
-            });
-          } catch (error) {
-            return error instanceof Error
-              ? `{{Render Error: ${error.message}}}`
-              : '{{Unknown Render Error}}';
-          }
-        });
-    } else if (mode === 'script') {
+  const evaluate: SandboxEvaluate = React.useCallback(
+    (script, ctx = {}) => createEvaluator(script, Object.keys(ctx))?.(...Object.values(ctx)),
+    [createEvaluator],
+  );
+  const safeEvaluate: SandboxSafeEvaluate = React.useCallback(
+    (script, ctx = {}, defaultValue = void 0) => {
       try {
-        value = stringify(execute(text, {
-          props: {
-            record,
-            recordIndex,
-            ext,
-          },
-          rec: record,
-        }));
+        return evaluate(script, ctx);
       } catch (error) {
-        value = error instanceof Error
-          ? `Render Error: ${error.message}`
-          : 'Unknown Render Error';
+        console.warn(error);
       }
-    }
-    return value;
-  };
+      return defaultValue;
+    },
+    [evaluate],
+  );
+  const finalizeString: FinalizeString = React.useCallback(
+    (mode, text, record, recordIndex, ext) => {
+      let value = '';
+      if (!mode || mode === 'plain') {
+        value = stringify(text);
+      } else if (mode === 'key') {
+        value = stringify(get(record, text, ''));
+      } else if (mode === 'pattern') {
+        value = stringify(text)
+          .replace(/\{\{(.+?)\}\}/guis, (s, s1) => {
+            try {
+              return evaluate(`return ${s1}`, {
+                props: {
+                  record,
+                  recordIndex,
+                  ext,
+                },
+                rec: record,
+              });
+            } catch (error) {
+              return error instanceof Error
+                ? `{{Render Error: ${error.message}}}`
+                : '{{Unknown Render Error}}';
+            }
+          });
+      } else if (mode === 'script') {
+        try {
+          value = stringify(evaluate(text, {
+            props: {
+              record,
+              recordIndex,
+              ext,
+            },
+            rec: record,
+          }));
+        } catch (error) {
+          value = error instanceof Error
+            ? `Render Error: ${error.message}`
+            : 'Unknown Render Error';
+        }
+      }
+      return value;
+    },
+    [evaluate],
+  );
 
   const context = React.useMemo(
     (): IDripTableContext<RecordType, ExtraOptions> => ({
@@ -258,8 +267,8 @@ const DripTableWrapper = React.forwardRef(<
       state,
       setState,
       createEvaluator,
-      evaluate: execute,
-      safeEvaluate: safeExecute,
+      evaluate,
+      safeEvaluate,
       finalizeString,
     }),
     [
@@ -268,8 +277,8 @@ const DripTableWrapper = React.forwardRef(<
       state,
       setState,
       createEvaluator,
-      execute,
-      safeExecute,
+      evaluate,
+      safeEvaluate,
       finalizeString,
     ],
   );
