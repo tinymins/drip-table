@@ -69,6 +69,7 @@ function CommonCell<
       {
         components: props.customComponents,
         ext: props.ext,
+        sorter: { key: null, direction: null, comparer: null },
         unknownComponent: <Alert type="error" message="未知组件" />,
         preview: props.preview !== false,
         icons: props.icons,

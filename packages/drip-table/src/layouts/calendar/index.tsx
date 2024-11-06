@@ -32,6 +32,7 @@ ExtraOptions extends Partial<DripTableExtraOptions> = never,
     const extraProps: DripTableColumnRenderOptions<RecordType, ExtraOptions>['extraProps'] = {
       components: tableProps.components,
       ext: tableProps.ext,
+      sorter: tableState.sorter,
       onEvent: tableProps.onEvent,
       onDataSourceChange: tableProps.onDataSourceChange,
       createEvaluator,

@@ -9,6 +9,7 @@
 import type { SandboxCreateEvaluator, SandboxEvaluate, SandboxSafeEvaluate } from '@/utils/sandbox';
 import type { DripTableComponentProps } from '@/components/cell-components';
 import type { FinalizeString } from '@/components/cell-components/utils';
+import type { IDripTableContext } from '@/hooks';
 import type { DripTableExtraOptions, DripTableProps, DripTableRecordTypeBase, DripTableRecordTypeWithSubtable, DripTableTableInformation, ExtractDripTableExtraOption } from '@/types';
 
 export interface DripTableColumnRenderOptions<
@@ -19,6 +20,7 @@ export interface DripTableColumnRenderOptions<
   extraProps: Pick<DripTableProps<RecordType, ExtraOptions>, 'components' | 'defaultComponentLib' | 'icons' | 'ext' | 'onEvent' | 'onDataSourceChange'> & {
     unknownComponent?: React.ReactNode;
     preview?: DripTableComponentProps<RecordType, ExtractDripTableExtraOption<ExtraOptions, 'CustomColumnSchema'>, ExtractDripTableExtraOption<ExtraOptions, 'CustomComponentEvent'>, ExtractDripTableExtraOption<ExtraOptions, 'CustomComponentExtraData'>>['preview'];
+    sorter: IDripTableContext<RecordType, ExtraOptions>['state']['sorter'];
     createEvaluator: SandboxCreateEvaluator;
     evaluate: SandboxEvaluate;
     safeEvaluate: SandboxSafeEvaluate;

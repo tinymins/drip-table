@@ -169,9 +169,7 @@ const hookColumRender = <
     tableInfo: DripTableTableInformation<RecordType, ExtraOptions>,
     rcTableInfo: RcTableInfo,
     extraProps: DripTableColumnRenderOptions<RecordType, ExtraOptions>['extraProps'],
-    tableContext: IDripTableContext<RecordType, ExtraOptions>,
   ): TableColumnType<RcTableRecordType<RecordType>> => {
-  const { safeEvaluate: safeExecute, state: { sorter } } = tableContext;
   const render = column.render;
   column.render = (d, row, index) => {
     if (rcTableInfo.cellConfigConflictIDs[rcTableInfo.cellConfigs[index]?.[columnIndex]?.spanGroupID ?? '']) {
@@ -189,14 +187,14 @@ const hookColumRender = <
                 const tdEl = el?.parentElement;
                 if (tdEl) {
                   const context = { props: { record: row.record, recordIndex: row.index, ext: extraProps.ext } };
-                  const parseStyleSchema = (style: string | Record<string, string> | undefined) => parseCSS(typeof style === 'string' ? safeExecute(style, context) : style);
+                  const parseStyleSchema = (style: string | Record<string, string> | undefined) => parseCSS(typeof style === 'string' ? extraProps.safeEvaluate(style, context) : style);
                   tdEl.dataset.tableUuid = tableInfo.uuid;
                   tdEl.dataset.columnKey = columnSchema.key;
                   tdEl.dataset.rowKey = row.key;
                   tdEl.dataset.basicStyle = stringifyCSS(Object.assign(
                     {
                       'text-align': columnSchema.align,
-                      background: sorter?.key === columnSchema.key ? 'var(--drip-table-column-sorted-background-color, inherit)' : void 0,
+                      background: extraProps.sorter?.key === columnSchema.key ? 'var(--drip-table-column-sorted-background-color, inherit)' : void 0,
                     },
                     parseStyleSchema(columnSchema.style),
                   ));
@@ -919,8 +917,7 @@ function TableLayout<
   RecordType extends DripTableRecordTypeWithSubtable<DripTableRecordTypeBase, ExtractDripTableExtraOption<ExtraOptions, 'SubtableDataSourceKey'>>,
   ExtraOptions extends Partial<DripTableExtraOptions> = never,
 >(props: TableLayoutComponentProps): JSX.Element {
-  const tableContext = useTableContext<RecordType, ExtraOptions>();
-  const { props: tableProps, info: tableInfo, state: tableState, setState: setTableState, createEvaluator, evaluate, safeEvaluate, finalizeString } = tableContext;
+  const { props: tableProps, info: tableInfo, state: tableState, setState: setTableState, createEvaluator, evaluate, safeEvaluate, finalizeString } = useTableContext<RecordType, ExtraOptions>();
   const tableUUID = tableInfo.uuid;
   const rowKey = tableProps.schema.rowKey ?? '$$row-key$$';
 
@@ -1272,6 +1269,7 @@ function TableLayout<
         defaultComponentLib: tableProps.defaultComponentLib,
         icons: tableProps.icons,
         ext: tableProps.ext,
+        sorter: tableState.sorter,
         onEvent: tableProps.onEvent,
         onDataSourceChange: tableProps.onDataSourceChange,
         createEvaluator,
@@ -1479,7 +1477,7 @@ function TableLayout<
           };
         }
       }
-      const flattenRcTableColumns = flattenSchemaColumns.map((sc, i) => hookColumRender(sc.column, sc.schema, i, tableInfo, rcTableInfo, extraProps, tableContext));
+      const flattenRcTableColumns = flattenSchemaColumns.map((sc, i) => hookColumRender(sc.column, sc.schema, i, tableInfo, rcTableInfo, extraProps));
       // 拍平结构组装回树形结构
       let iterIndex = flattenSchemaColumnsOffset - 1;
       const iter = (cs: typeof visibleColumns): TableColumnsType<RcTableRecordType<RecordType, never>> => cs.map((c) => {
@@ -1496,19 +1494,26 @@ function TableLayout<
       ];
     },
     [
+      createEvaluator,
+      evaluate,
+      safeEvaluate,
+      finalizeString,
       dragInIndex,
       tableInfo,
+      tableInfo.schema.rowSlotKey,
       tableProps.schema.columns,
+      tableProps.schema.rowHeader,
+      tableProps.schema.rowFooter,
       tableProps.components,
+      tableProps.defaultComponentLib,
+      tableProps.icons,
       tableProps.ext,
       tableProps.rowSelectable,
       tableProps.onEvent,
       tableProps.onDataSourceChange,
+      tableProps.schemaFunctionPreprocessor,
       tableState.displayColumnKeys,
       tableState.selectedRowKeys,
-      tableInfo.schema.rowSlotKey,
-      tableProps.schema.rowHeader,
-      tableProps.schema.rowFooter,
       tableState.sorter,
     ],
   );
