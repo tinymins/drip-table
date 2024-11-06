@@ -169,8 +169,9 @@ const hookColumRender = <
     tableInfo: DripTableTableInformation<RecordType, ExtraOptions>,
     rcTableInfo: RcTableInfo,
     extraProps: DripTableColumnRenderOptions<RecordType, ExtraOptions>['extraProps'],
+    tableContext: IDripTableContext<RecordType, ExtraOptions>,
   ): TableColumnType<RcTableRecordType<RecordType>> => {
-  const { safeEvaluate: safeExecute, state: { sorter } } = useTableContext<RecordType, ExtraOptions>();
+  const { safeEvaluate: safeExecute, state: { sorter } } = tableContext;
   const render = column.render;
   column.render = (d, row, index) => {
     if (rcTableInfo.cellConfigConflictIDs[rcTableInfo.cellConfigs[index]?.[columnIndex]?.spanGroupID ?? '']) {
@@ -918,7 +919,8 @@ function TableLayout<
   RecordType extends DripTableRecordTypeWithSubtable<DripTableRecordTypeBase, ExtractDripTableExtraOption<ExtraOptions, 'SubtableDataSourceKey'>>,
   ExtraOptions extends Partial<DripTableExtraOptions> = never,
 >(props: TableLayoutComponentProps): JSX.Element {
-  const { props: tableProps, info: tableInfo, state: tableState, setState: setTableState, createEvaluator, evaluate, safeEvaluate, finalizeString } = useTableContext<RecordType, ExtraOptions>();
+  const tableContext = useTableContext<RecordType, ExtraOptions>();
+  const { props: tableProps, info: tableInfo, state: tableState, setState: setTableState, createEvaluator, evaluate, safeEvaluate, finalizeString } = tableContext;
   const tableUUID = tableInfo.uuid;
   const rowKey = tableProps.schema.rowKey ?? '$$row-key$$';
 
@@ -1477,7 +1479,7 @@ function TableLayout<
           };
         }
       }
-      const flattenRcTableColumns = flattenSchemaColumns.map((sc, i) => hookColumRender(sc.column, sc.schema, i, tableInfo, rcTableInfo, extraProps));
+      const flattenRcTableColumns = flattenSchemaColumns.map((sc, i) => hookColumRender(sc.column, sc.schema, i, tableInfo, rcTableInfo, extraProps, tableContext));
       // 拍平结构组装回树形结构
       let iterIndex = flattenSchemaColumnsOffset - 1;
       const iter = (cs: typeof visibleColumns): TableColumnsType<RcTableRecordType<RecordType, never>> => cs.map((c) => {
